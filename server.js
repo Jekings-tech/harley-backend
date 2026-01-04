@@ -26,6 +26,20 @@ mongoose.connect(mongoURI)
 const productRoutes = require('./routes/productRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 
+app.post('/api/auth/login', (req, res) => {
+    const { username, password } = req.body;
+    
+    // Using your specific credentials
+    if (username === 'Autoretail' && password === 'Autoretail237') {
+        res.json({ 
+            success: true, 
+            token: 'SECRET_RETAIL_KEY_2024' // This is the "Key" the browser will hold
+        });
+    } else {
+        res.status(401).json({ success: false, message: 'Invalid credentials' });
+    }
+});
+
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
 
