@@ -15,7 +15,7 @@ cloudinary.config({
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: 'autoparts_business',
+    folder: 'motorcycle_parts',
     allowed_formats: ['jpg', 'png', 'jpeg', 'webp']
   }
 });
@@ -24,17 +24,31 @@ const upload = multer({ storage: storage });
 
 // --- ROUTES ---
 
+// GET all products
 router.get('/', productController.getAllProducts);
 
-// 1. FIXED: Your frontend sends search as a query parameter (?search=...) 
-// and the controller expects req.query, so change this:
-router.get('/search', productController.searchProducts); 
+// GET featured products
+router.get('/featured', productController.getFeaturedProducts);
 
-// 2. FIXED: Changed 'getProduct' to 'getProductById' to match your controller
-router.get('/:id', productController.getProductById); 
+// GET products by brand
+router.get('/brand/:brandId', productController.getProductsByBrand);
 
+// GET products by country
+router.get('/country/:countryId', productController.getProductsByCountry);
+
+// Search products
+router.get('/search', productController.searchProducts);
+
+// GET single product
+router.get('/:id', productController.getProductById);
+
+// CREATE product (multiple images)
 router.post('/', upload.array('images', 10), productController.createProduct);
+
+// UPDATE product (optional new images)
 router.put('/:id', upload.array('images', 10), productController.updateProduct);
+
+// DELETE product
 router.delete('/:id', productController.deleteProduct);
 
 module.exports = router;

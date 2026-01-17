@@ -2,31 +2,22 @@ const express = require('express');
 const router = express.Router();
 const categoryController = require('../controllers/categoryController');
 
-
-
-router.post('/seed', categoryController.seedCategories);
-// @route   GET /api/categories
-// @desc    Get all categories
+// GET all categories
 router.get('/', categoryController.getAllCategories);
 
-// @route   GET /api/categories/:id
-// @desc    Get single category
+// GET single category with products
 router.get('/:id', categoryController.getCategory);
 
-// @route   POST /api/categories
-// @desc    Create new category
+// CREATE category
 router.post('/', categoryController.createCategory);
 
-// @route   PUT /api/categories/:id
-// @desc    Update category
+// UPDATE category
 router.put('/:id', categoryController.updateCategory);
 
-// @route   DELETE /api/categories/:id
-// @desc    Delete category
+// DELETE category
 router.delete('/:id', categoryController.deleteCategory);
 
-// @route   POST /api/categories/seed
-// @desc    Seed initial categories
-
+// SEED motorcycle parts categories
+router.post('/seed', categoryController.seedCategories);
 
 module.exports = router;
