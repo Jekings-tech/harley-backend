@@ -84,7 +84,10 @@ exports.createProduct = async (req, res) => {
         }
         
         // Use placeholder image for now
-        const images = ['https://via.placeholder.com/500x500/cccccc/969696?text=Product+Image'];
+        // Use provided images OR placeholder
+const images = req.body.images && req.body.images.length > 0 
+    ? (Array.isArray(req.body.images) ? req.body.images : [req.body.images])
+    : ['https://via.placeholder.com/500x500/cccccc/969696?text=Product+Image'];
         
         // Parse arrays if provided
         const compatibilityArray = compatibility 
