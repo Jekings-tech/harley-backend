@@ -40,12 +40,9 @@ exports.getProductById = async (req, res) => {
     }
 };
 
-// 
-       
-       
-        
+// @desc    Create product
 exports.createProduct = async (req, res) => {
-    console.log('🚀 CREATE PRODUCT - NO IMAGES REQUIRED');
+    console.log('🚀 CREATE PRODUCT - WITH SLUG FIX');
     
     try {
         // Get data
@@ -60,7 +57,8 @@ exports.createProduct = async (req, res) => {
             brand,
             quantity,
             compatibility,
-            features
+            features,
+            slug  // Accept slug from frontend if provided
         } = req.body;
         
         console.log('📥 Received data:', {
@@ -90,6 +88,13 @@ exports.createProduct = async (req, res) => {
             ? (Array.isArray(features) ? features : String(features).split(',').map(item => item.trim()))
             : [];
         
+        // Generate unique slug if not provided
+        const productSlug = slug || name.toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-')
+            .trim() + '-' + Date.now();
+        
         // Create product
         const productData = {
             name: String(name),
@@ -100,16 +105,17 @@ exports.createProduct = async (req, res) => {
             category: String(category),
             country: String(country),
             brand: String(brand),
-            images: images, // ← PLACEHOLDER IMAGE
+            images: images,
             quantity: parseInt(quantity) || 0,
             compatibility: compatibilityArray,
             features: featuresArray,
             inStock: true,
             isFeatured: false,
-            primaryImage: images[0]
+            primaryImage: images[0],
+            slug: productSlug  // ⭐ CRITICAL: Add slug field to avoid duplicate key error
         };
         
-        console.log('📝 Creating product with:', productData);
+        console.log('📝 Creating product with slug:', productSlug);
         
         const product = await Product.create(productData);
         
@@ -130,7 +136,7 @@ exports.createProduct = async (req, res) => {
         });
     }
 };
-        
+
 // @desc    Update product
 exports.updateProduct = async (req, res) => {
     try {
@@ -145,13 +151,22 @@ exports.updateProduct = async (req, res) => {
         
         console.log('🔄 Updating product:', req.params.id);
         console.log('📦 Update data:', req.body);
-        console.log('📸 New files:', req.files ? req.files.length : 0);
         
         // Update only provided fields
         const updates = req.body;
         
-        // Simple field updates
-        if (updates.name !== undefined) product.name = String(updates.name);
+        // Update name and slug together
+        if (updates.name !== undefined) {
+            product.name = String(updates.name);
+            // Update slug when name changes
+            product.slug = updates.name.toLowerCase()
+                .replace(/[^a-z0-9\s-]/g, '')
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-')
+                .trim() + '-' + Date.now();
+        }
+        
+        // Other field updates
         if (updates.category !== undefined) product.category = String(updates.category);
         if (updates.country !== undefined) product.country = String(updates.country);
         if (updates.brand !== undefined) product.brand = String(updates.brand);
@@ -180,24 +195,11 @@ exports.updateProduct = async (req, res) => {
                 : String(updates.features).split(',').map(item => item.trim()).filter(item => item);
         }
         
-        // Specifications
-        if (updates.specifications !== undefined) {
-            try {
-                product.specifications = typeof updates.specifications === 'string' 
-                    ? JSON.parse(updates.specifications) 
-                    : updates.specifications;
-            } catch (e) {
-                console.log('⚠️ Could not parse specifications:', e.message);
-            }
-        }
-        
-        // Update images if new ones uploaded
-        if (req.files && req.files.length > 0) {
-            const newImages = req.files.map(file => file.path);
-            product.images = [...product.images, ...newImages];
-            // Set primary image if not set
-            if (!product.primaryImage && newImages.length > 0) {
-                product.primaryImage = newImages[0];
+        // Update images if provided
+        if (updates.images !== undefined) {
+            product.images = Array.isArray(updates.images) ? updates.images : [updates.images];
+            if (product.images.length > 0 && !product.primaryImage) {
+                product.primaryImage = product.images[0];
             }
         }
         
