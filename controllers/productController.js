@@ -3,7 +3,11 @@ const Product = require('../models/Product');
 // @desc    Get all products
 exports.getAllProducts = async (req, res) => {
     try {
-        const products = await Product.find().sort({ createdAt: -1 });
+        const products = await Product.find()
+            .sort({ createdAt: -1 })
+            .populate('category', 'name')      // Populates with category name
+            .populate('country', 'name')       // Populates with country name
+            .populate('brand', 'name logo');   // Populates with brand name & logo
         
         res.status(200).json({
             success: true,
@@ -22,7 +26,10 @@ exports.getAllProducts = async (req, res) => {
 // @desc    Get single product
 exports.getProductById = async (req, res) => {
     try {
-        const product = await Product.findById(req.params.id);
+        const product = await Product.findById(req.params.id)
+            .populate('category', 'name')
+            .populate('country', 'name')
+            .populate('brand', 'name logo');
             
         if (!product) {
             return res.status(404).json({
