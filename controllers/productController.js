@@ -1,16 +1,9 @@
 const Product = require('../models/Product');
-const Category = require('../models/Category');
-const Brand = require('../models/Brand');
-const Country = require('../models/Country');
 
-// @desc    Get all products with full details
+// @desc    Get all products
 exports.getAllProducts = async (req, res) => {
     try {
-        const products = await Product.find()
-            .populate('category', 'name')
-            .populate('country', 'name code')
-            .populate('brand', 'name logo')
-            .sort({ createdAt: -1 });
+        const products = await Product.find().sort({ createdAt: -1 });
         
         res.status(200).json({
             success: true,
@@ -29,10 +22,7 @@ exports.getAllProducts = async (req, res) => {
 // @desc    Get single product
 exports.getProductById = async (req, res) => {
     try {
-        const product = await Product.findById(req.params.id)
-            .populate('category', 'name')
-            .populate('country', 'name')
-            .populate('brand', 'name logo');
+        const product = await Product.findById(req.params.id);
             
         if (!product) {
             return res.status(404).json({
@@ -50,110 +40,89 @@ exports.getProductById = async (req, res) => {
     }
 };
 
-// @desc    Create new product (MOTORCYCLE PARTS VERSION)
+// 
+       
+       
+        
 exports.createProduct = async (req, res) => {
+    console.log('🚀 CREATE PRODUCT - NO IMAGES REQUIRED');
+    
     try {
-        const {
-            name,
-            category,
-            country,
+        // Get data
+        const { 
+            name, 
+            price, 
+            description, 
+            motorcycleModel, 
+            condition, 
+            category, 
+            country, 
             brand,
-            motorcycleModel,
-            condition,
-            price,
-            description,
-            compatibility,
-            features,
-            specifications,
-            inStock,
             quantity,
-            isFeatured,
-            isOnSale,
-            salePrice
+            compatibility,
+            features
         } = req.body;
         
-        // Required fields validation
-        const requiredFields = ['name', 'category', 'country', 'brand', 'motorcycleModel', 'condition', 'price', 'description'];
-        for (const field of requiredFields) {
-            if (!req.body[field]) {
-                return res.status(400).json({
-                    success: false,
-                    message: `${field} is required`
-                });
-            }
-        }
+        console.log('📥 Received data:', {
+            name, price, description, motorcycleModel, condition, category, country, brand
+        });
         
-        // Parse arrays if they're sent as strings
-        let compatibilityArray = [];
-        let featuresArray = [];
+        // Simple validation
+        const requiredFields = ['name', 'price', 'description', 'category', 'country', 'brand'];
+        const missingFields = requiredFields.filter(field => !req.body[field]);
         
-        if (compatibility) {
-            compatibilityArray = Array.isArray(compatibility) 
-                ? compatibility 
-                : compatibility.split(',').map(item => item.trim());
-        }
-        
-        if (features) {
-            featuresArray = Array.isArray(features) 
-                ? features 
-                : features.split(',').map(item => item.trim());
-        }
-        
-        // Parse specifications if sent as JSON string
-        let specsObject = {};
-        if (specifications && typeof specifications === 'string') {
-            try {
-                specsObject = JSON.parse(specifications);
-            } catch (e) {
-                specsObject = {};
-            }
-        } else if (specifications) {
-            specsObject = specifications;
-        }
-        
-        // Get image URLs from Cloudinary upload
-        const images = req.files ? req.files.map(file => file.path) : [];
-        
-        if (images.length === 0) {
+        if (missingFields.length > 0) {
             return res.status(400).json({
                 success: false,
-                message: 'At least one image is required'
+                message: `Missing required fields: ${missingFields.join(', ')}`
             });
         }
         
-        const product = await Product.create({
-            name,
-            category,
-            country,
-            brand,
-            motorcycleModel,
-            condition,
-            price: parseFloat(price),
-            description,
-            images,
-            primaryImage: images[0],
+        // Use placeholder image for now
+        const images = ['https://via.placeholder.com/500x500/cccccc/969696?text=Product+Image'];
+        
+        // Parse arrays if provided
+        const compatibilityArray = compatibility 
+            ? (Array.isArray(compatibility) ? compatibility : String(compatibility).split(',').map(item => item.trim()))
+            : [];
+            
+        const featuresArray = features
+            ? (Array.isArray(features) ? features : String(features).split(',').map(item => item.trim()))
+            : [];
+        
+        // Create product
+        const productData = {
+            name: String(name),
+            price: parseFloat(price) || 0,
+            description: String(description),
+            motorcycleModel: motorcycleModel || 'Generic',
+            condition: condition || 'New',
+            category: String(category),
+            country: String(country),
+            brand: String(brand),
+            images: images, // ← PLACEHOLDER IMAGE
+            quantity: parseInt(quantity) || 0,
             compatibility: compatibilityArray,
             features: featuresArray,
-            specifications: specsObject,
-            inStock: inStock === 'true' || inStock === true,
-            quantity: quantity ? parseInt(quantity) : 0,
-            isFeatured: isFeatured === 'true' || isFeatured === true,
-            isOnSale: isOnSale === 'true' || isOnSale === true,
-            salePrice: salePrice ? parseFloat(salePrice) : null
-        });
+            inStock: true,
+            isFeatured: false,
+            primaryImage: images[0]
+        };
         
-        // Get full populated product
-        const populatedProduct = await Product.findById(product._id)
-            .populate('category', 'name')
-            .populate('country', 'name')
-            .populate('brand', 'name logo');
+        console.log('📝 Creating product with:', productData);
+        
+        const product = await Product.create(productData);
+        
+        console.log('✅ Product created successfully:', product._id);
         
         res.status(201).json({
             success: true,
             message: 'Product created successfully',
-            data: populatedProduct
+            data: product
         });
+        
     } catch (error) {
+        console.error('❌ Create error:', error.message);
         res.status(500).json({
             success: false,
             message: 'Error creating product',
@@ -161,11 +130,11 @@ exports.createProduct = async (req, res) => {
         });
     }
 };
-
+        
 // @desc    Update product
 exports.updateProduct = async (req, res) => {
     try {
-        let product = await Product.findById(req.params.id);
+        const product = await Product.findById(req.params.id);
         
         if (!product) {
             return res.status(404).json({
@@ -174,74 +143,59 @@ exports.updateProduct = async (req, res) => {
             });
         }
         
-        const {
-            name,
-            category,
-            country,
-            brand,
-            motorcycleModel,
-            condition,
-            price,
-            description,
-            compatibility,
-            features,
-            specifications,
-            inStock,
-            quantity,
-            isFeatured,
-            isOnSale,
-            salePrice
-        } = req.body;
+        console.log('🔄 Updating product:', req.params.id);
+        console.log('📦 Update data:', req.body);
+        console.log('📸 New files:', req.files ? req.files.length : 0);
         
-        // Update basic fields if provided
-        if (name) product.name = name;
-        if (category) product.category = category;
-        if (country) product.country = country;
-        if (brand) product.brand = brand;
-        if (motorcycleModel) product.motorcycleModel = motorcycleModel;
-        if (condition) product.condition = condition;
-        if (price) product.price = parseFloat(price);
-        if (description) product.description = description;
+        // Update only provided fields
+        const updates = req.body;
         
-        // Update arrays if provided
-        if (compatibility) {
-            product.compatibility = Array.isArray(compatibility) 
-                ? compatibility 
-                : compatibility.split(',').map(item => item.trim());
+        // Simple field updates
+        if (updates.name !== undefined) product.name = String(updates.name);
+        if (updates.category !== undefined) product.category = String(updates.category);
+        if (updates.country !== undefined) product.country = String(updates.country);
+        if (updates.brand !== undefined) product.brand = String(updates.brand);
+        if (updates.motorcycleModel !== undefined) product.motorcycleModel = String(updates.motorcycleModel);
+        if (updates.condition !== undefined) product.condition = String(updates.condition);
+        if (updates.price !== undefined) product.price = parseFloat(updates.price) || 0;
+        if (updates.description !== undefined) product.description = String(updates.description);
+        if (updates.quantity !== undefined) product.quantity = parseInt(updates.quantity) || 0;
+        
+        // Boolean fields
+        if (updates.inStock !== undefined) product.inStock = updates.inStock === 'true' || updates.inStock === true;
+        if (updates.isFeatured !== undefined) product.isFeatured = updates.isFeatured === 'true' || updates.isFeatured === true;
+        if (updates.isOnSale !== undefined) product.isOnSale = updates.isOnSale === 'true' || updates.isOnSale === true;
+        if (updates.salePrice !== undefined) product.salePrice = updates.salePrice ? parseFloat(updates.salePrice) : null;
+        
+        // Arrays
+        if (updates.compatibility !== undefined) {
+            product.compatibility = Array.isArray(updates.compatibility) 
+                ? updates.compatibility 
+                : String(updates.compatibility).split(',').map(item => item.trim()).filter(item => item);
         }
         
-        if (features) {
-            product.features = Array.isArray(features) 
-                ? features 
-                : features.split(',').map(item => item.trim());
+        if (updates.features !== undefined) {
+            product.features = Array.isArray(updates.features) 
+                ? updates.features 
+                : String(updates.features).split(',').map(item => item.trim()).filter(item => item);
         }
         
-        // Update specifications
-        if (specifications) {
-            if (typeof specifications === 'string') {
-                try {
-                    product.specifications = JSON.parse(specifications);
-                } catch (e) {
-                    // Keep existing specs if JSON is invalid
-                }
-            } else {
-                product.specifications = specifications;
+        // Specifications
+        if (updates.specifications !== undefined) {
+            try {
+                product.specifications = typeof updates.specifications === 'string' 
+                    ? JSON.parse(updates.specifications) 
+                    : updates.specifications;
+            } catch (e) {
+                console.log('⚠️ Could not parse specifications:', e.message);
             }
         }
         
-        // Update boolean/number fields
-        if (inStock !== undefined) product.inStock = inStock === 'true' || inStock === true;
-        if (quantity !== undefined) product.quantity = parseInt(quantity);
-        if (isFeatured !== undefined) product.isFeatured = isFeatured === 'true' || isFeatured === true;
-        if (isOnSale !== undefined) product.isOnSale = isOnSale === 'true' || isOnSale === true;
-        if (salePrice !== undefined) product.salePrice = salePrice ? parseFloat(salePrice) : null;
-        
         // Update images if new ones uploaded
         if (req.files && req.files.length > 0) {
-            // Add new images to existing images
             const newImages = req.files.map(file => file.path);
             product.images = [...product.images, ...newImages];
-            // If no primary image, set first new image as primary
+            // Set primary image if not set
             if (!product.primaryImage && newImages.length > 0) {
                 product.primaryImage = newImages[0];
             }
@@ -249,17 +203,15 @@ exports.updateProduct = async (req, res) => {
         
         await product.save();
         
-        const updatedProduct = await Product.findById(product._id)
-            .populate('category', 'name')
-            .populate('country', 'name')
-            .populate('brand', 'name logo');
+        console.log('✅ Product updated successfully:', product._id);
         
         res.status(200).json({
             success: true,
             message: 'Product updated successfully',
-            data: updatedProduct
+            data: product
         });
     } catch (error) {
+        console.error('❌ Update product error:', error);
         res.status(500).json({
             success: false,
             message: 'Error updating product',
@@ -280,13 +232,6 @@ exports.deleteProduct = async (req, res) => {
             });
         }
         
-        // Note: In production, you should also delete images from Cloudinary
-        // const cloudinary = require('cloudinary').v2;
-        // for (const imageUrl of product.images) {
-        //     const publicId = imageUrl.split('/').pop().split('.')[0];
-        //     await cloudinary.uploader.destroy(publicId);
-        // }
-        
         await product.deleteOne();
         
         res.status(200).json({
@@ -305,7 +250,7 @@ exports.deleteProduct = async (req, res) => {
 // @desc    Search products
 exports.searchProducts = async (req, res) => {
     try {
-        const { search, category, brand, country, condition } = req.query;
+        const { search } = req.query;
         let query = {};
         
         // Text search
@@ -313,35 +258,14 @@ exports.searchProducts = async (req, res) => {
             query.$or = [
                 { name: { $regex: search, $options: 'i' } },
                 { description: { $regex: search, $options: 'i' } },
-                { motorcycleModel: { $regex: search, $options: 'i' } }
+                { motorcycleModel: { $regex: search, $options: 'i' } },
+                { category: { $regex: search, $options: 'i' } },
+                { country: { $regex: search, $options: 'i' } },
+                { brand: { $regex: search, $options: 'i' } }
             ];
         }
         
-        // Filter by category
-        if (category) {
-            query.category = category;
-        }
-        
-        // Filter by brand
-        if (brand) {
-            query.brand = brand;
-        }
-        
-        // Filter by country
-        if (country) {
-            query.country = country;
-        }
-        
-        // Filter by condition
-        if (condition) {
-            query.condition = condition;
-        }
-        
-        const products = await Product.find(query)
-            .populate('category', 'name')
-            .populate('country', 'name')
-            .populate('brand', 'name logo')
-            .sort({ createdAt: -1 });
+        const products = await Product.find(query).sort({ createdAt: -1 });
         
         res.status(200).json({
             success: true,
@@ -361,9 +285,6 @@ exports.searchProducts = async (req, res) => {
 exports.getFeaturedProducts = async (req, res) => {
     try {
         const products = await Product.find({ isFeatured: true })
-            .populate('category', 'name')
-            .populate('country', 'name')
-            .populate('brand', 'name logo')
             .limit(10)
             .sort({ createdAt: -1 });
         
@@ -385,9 +306,6 @@ exports.getFeaturedProducts = async (req, res) => {
 exports.getProductsByBrand = async (req, res) => {
     try {
         const products = await Product.find({ brand: req.params.brandId })
-            .populate('category', 'name')
-            .populate('country', 'name')
-            .populate('brand', 'name logo')
             .sort({ createdAt: -1 });
         
         res.status(200).json({
@@ -408,9 +326,6 @@ exports.getProductsByBrand = async (req, res) => {
 exports.getProductsByCountry = async (req, res) => {
     try {
         const products = await Product.find({ country: req.params.countryId })
-            .populate('category', 'name')
-            .populate('country', 'name')
-            .populate('brand', 'name logo')
             .sort({ createdAt: -1 });
         
         res.status(200).json({

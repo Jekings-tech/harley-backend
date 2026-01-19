@@ -55,16 +55,24 @@ app.post('/api/auth/login', (req, res) => {
     }
 });
 
+        // Simple product data
+        
+// Add before your routes
+app.use((req, res, next) => {
+    console.log(`🔄 ${req.method} ${req.originalUrl}`);
+    next();
+});   
+
 // Protected Routes (Require authentication)
 const productRoutes = require('./routes/productRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const brandRoutes = require('./routes/brandRoutes');
 const countryRoutes = require('./routes/countryRoutes');
 
-app.use('/api/products', authenticate, productRoutes);
-app.use('/api/categories', authenticate, categoryRoutes);
-app.use('/api/brands', authenticate, brandRoutes);
-app.use('/api/countries', authenticate, countryRoutes);
+app.use('/api/products',productRoutes);
+app.use('/api/categories',  categoryRoutes);
+app.use('/api/brands',  brandRoutes);
+app.use('/api/countries',  countryRoutes);
 
 // Health Check Route (No authentication required)
 app.get('/api/health', (req, res) => {
