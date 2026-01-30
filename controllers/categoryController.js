@@ -209,22 +209,20 @@ exports.deleteCategory = async (req, res) => {
 };
 
 // @desc    Seed initial motorcycle parts categories
+// @desc    Add missing motorcycle parts categories (safe - won't delete existing ones)
 exports.seedCategories = async (req, res) => {
     try {
-        // Clear existing categories
-        await Category.deleteMany({});
-        
         const motorcycleCategories = [
             { name: 'Exhaust System', description: 'Mufflers, pipes, headers and complete exhaust systems' },
             { name: 'Brakes', description: 'Brake pads, rotors, calipers, and brake lines' },
             { name: 'Suspension & Steering', description: 'Shocks, forks, steering dampers, and handlebars' },
             { name: 'Wheels & Tyres', description: 'Rims, spokes, tires, and wheel accessories' },
-            { name: 'Body  Parts', description: 'Fairings, fenders, tanks, and frame components' },
+            { name: 'Body Parts', description: 'Fairings, fenders, tanks, and frame components' },
             { name: 'Seats & Comfort', description: 'Seats, backrests, cushions, and comfort accessories' },
             { name: 'Handlebars & Controls', description: 'Handlebars, grips, levers, and control cables' },
             { name: 'Lighting & Indicators', description: 'Headlights, taillights, turn signals, and LED kits' },
             { name: 'Engine & Performance Parts', description: 'Cylinders, pistons, cams, and performance upgrades' },
-            { name: 'Accessories ', description: 'Custom parts, luggage, and motorcycle accessories' },
+            { name: 'Accessories', description: 'Custom parts, luggage, and motorcycle accessories' },
             { name: 'Electrical & Electronics', description: 'Electrical components, wiring, and electronic accessories' },
             { name: 'Frame & Chassis', description: 'Frame components, chassis parts, and structural elements' },
             { name: 'Luggage & Storage', description: 'Luggage, storage boxes, and related accessories' },
@@ -232,14 +230,52 @@ exports.seedCategories = async (req, res) => {
             { name: 'Fuel & Intake', description: 'Fuel tanks, carburetors, intake manifolds, and related parts' }
         ];
         
-        await Category.insertMany(motorcycleCategories);
+        // Count existing categories first
+        const existingCount = await Category.countDocuments();
+        console.log(`📊 Found ${existingCount} existing categories`);
+        
+        // Only add categories that don't exist
+        const added = [];
+        const skipped = [];
+        
+        for (const catData of motorcycleCategories) {
+            // Check if category already exists (case-insensitive)
+            const existing = await Category.findOne({ 
+                name: { $regex: new RegExp(`^${catData.name}$`, 'i') } 
+            });
+            
+            if (existing) {
+                skipped.push(catData.name);
+                console.log(`⏭️ Skipping "${catData.name}" - already exists`);
+            } else {
+                try {
+                    const category = await Category.create(catData);
+                    added.push(category);
+                    console.log(`✅ Added "${catData.name}"`);
+                } catch (err) {
+                    console.log(`⚠️ Could not add "${catData.name}": ${err.message}`);
+                    skipped.push(catData.name);
+                }
+            }
+        }
+        
+        const totalNow = await Category.countDocuments();
         
         res.status(200).json({
             success: true,
-            message: 'Motorcycle parts categories seeded successfully',
-            data: motorcycleCategories
+            message: 'Categories processed successfully',
+            stats: {
+                added: added.length,
+                skipped: skipped.length,
+                existingBefore: existingCount,
+                totalNow: totalNow
+            },
+            added: added.map(cat => ({ name: cat.name, id: cat._id })),
+            skipped: skipped
         });
+        
     } catch (error) {
+        console.error('🔥 Seed error:', error);
         res.status(500).json({
             success: false,
             message: 'Error seeding categories',
