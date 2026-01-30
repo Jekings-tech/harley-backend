@@ -219,12 +219,17 @@ exports.seedCategories = async (req, res) => {
             { name: 'Brakes', description: 'Brake pads, rotors, calipers, and brake lines' },
             { name: 'Suspension & Steering', description: 'Shocks, forks, steering dampers, and handlebars' },
             { name: 'Wheels & Tyres', description: 'Rims, spokes, tires, and wheel accessories' },
-            { name: 'Body & Frame Parts', description: 'Fairings, fenders, tanks, and frame components' },
+            { name: 'Body  Parts', description: 'Fairings, fenders, tanks, and frame components' },
             { name: 'Seats & Comfort', description: 'Seats, backrests, cushions, and comfort accessories' },
             { name: 'Handlebars & Controls', description: 'Handlebars, grips, levers, and control cables' },
             { name: 'Lighting & Indicators', description: 'Headlights, taillights, turn signals, and LED kits' },
             { name: 'Engine & Performance Parts', description: 'Cylinders, pistons, cams, and performance upgrades' },
-            { name: 'Accessories & Custom Parts', description: 'Custom parts, luggage, and motorcycle accessories' }
+            { name: 'Accessories ', description: 'Custom parts, luggage, and motorcycle accessories' },
+            { name: 'Electrical & Electronics', description: 'Electrical components, wiring, and electronic accessories' },
+            { name: 'Frame & Chassis', description: 'Frame components, chassis parts, and structural elements' },
+            { name: 'Luggage & Storage', description: 'Luggage, storage boxes, and related accessories' },
+            { name: 'Foot Controls & Pegs', description: 'Footpegs, footrests, and related foot controls' },
+            { name: 'Fuel & Intake', description: 'Fuel tanks, carburetors, intake manifolds, and related parts' }
         ];
         
         await Category.insertMany(motorcycleCategories);
