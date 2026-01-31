@@ -67,7 +67,7 @@ exports.getCategory = async (req, res) => {
 };
 
 // @desc    Create new category (with optional parent)
-exports.createCategory = async (req, res, next) => { // ← ADDED 'next' parameter
+exports.createCategory = async (req, res) => {
     try {
         const { name, description, icon, parentCategory } = req.body;
         
@@ -101,21 +101,18 @@ exports.createCategory = async (req, res, next) => { // ← ADDED 'next' paramet
         });
         
     } catch (error) {
-        // Use next() if available, otherwise fallback
-        if (next) {
-            next(error);
-        } else {
-            res.status(500).json({
-                success: false,
-                message: 'Error creating category',
-                error: error.message
-            });
-        }
+        // REMOVED the 'next' parameter completely
+        console.error('🔥 Create category error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error creating category',
+            error: error.message
+        });
     }
 };
 
 // @desc    Update category
-exports.updateCategory = async (req, res, next) => { // ← ADDED 'next' parameter
+exports.updateCategory = async (req, res) => {
     try {
         let category = await Category.findById(req.params.id);
         
@@ -157,16 +154,13 @@ exports.updateCategory = async (req, res, next) => { // ← ADDED 'next' paramet
         });
         
     } catch (error) {
-        // Use next() if available, otherwise fallback
-        if (next) {
-            next(error);
-        } else {
-            res.status(500).json({
-                success: false,
-                message: 'Error updating category',
-                error: error.message
-            });
-        }
+        // REMOVED the 'next' parameter completely
+        console.error('🔥 Update category error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error updating category',
+            error: error.message
+        });
     }
 };
 

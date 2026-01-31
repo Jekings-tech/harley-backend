@@ -12,7 +12,7 @@ const categorySchema = new mongoose.Schema({
         trim: true
     },
     icon: {
-        type: String, // URL to category icon/image
+        type: String,
         default: ''
     },
     parentCategory: {
@@ -22,11 +22,8 @@ const categorySchema = new mongoose.Schema({
     },
     level: {
         type: Number,
-        default: 0 // 0 = main category, 1 = subcategory
+        default: 0
     },
-    // For your motorcycle parts categories:
-    // Main Categories: Exhaust System, Brakes, Suspension & Steering, etc.
-    // Subcategories could be added if needed later
     isActive: {
         type: Boolean,
         default: true
@@ -35,15 +32,17 @@ const categorySchema = new mongoose.Schema({
     timestamps: true 
 });
 
-// Auto-generate level based on parentCategory
+// FIXED: Safe pre-save hook
 categorySchema.pre('save', function(next) {
-    if (this.parentCategory) {
-        this.level = 1;
-    } else {
-        this.level = 0;
+    console.log('🔄 Category pre-save hook running');
+    
+    // Calculate level
+    this.level = this.parentCategory ? 1 : 0;
+    
+    // Safely call next
+    if (next && typeof next === 'function') {
+        return next();
     }
-    next();
 });
 
-// Make sure the second word matches whatever you named your schema variable above
 module.exports = mongoose.model('Category', categorySchema);
