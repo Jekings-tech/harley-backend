@@ -83,6 +83,16 @@ app.get('/api/health', (req, res) => {
     });
 });
 
+app.use((error, req, res, next) => {
+    console.error('🔥 Express Error Handler:', error);
+    
+    res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+        error: error.message
+    });
+});
+
 // Start Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

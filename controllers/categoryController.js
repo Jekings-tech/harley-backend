@@ -67,7 +67,7 @@ exports.getCategory = async (req, res) => {
 };
 
 // @desc    Create new category (with optional parent)
-exports.createCategory = async (req, res) => {
+exports.createCategory = async (req, res, next) => { // ← ADDED 'next' parameter
     try {
         const { name, description, icon, parentCategory } = req.body;
         
@@ -101,16 +101,21 @@ exports.createCategory = async (req, res) => {
         });
         
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Error creating category',
-            error: error.message
-        });
+        // Use next() if available, otherwise fallback
+        if (next) {
+            next(error);
+        } else {
+            res.status(500).json({
+                success: false,
+                message: 'Error creating category',
+                error: error.message
+            });
+        }
     }
 };
 
 // @desc    Update category
-exports.updateCategory = async (req, res) => {
+exports.updateCategory = async (req, res, next) => { // ← ADDED 'next' parameter
     try {
         let category = await Category.findById(req.params.id);
         
@@ -152,11 +157,16 @@ exports.updateCategory = async (req, res) => {
         });
         
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Error updating category',
-            error: error.message
-        });
+        // Use next() if available, otherwise fallback
+        if (next) {
+            next(error);
+        } else {
+            res.status(500).json({
+                success: false,
+                message: 'Error updating category',
+                error: error.message
+            });
+        }
     }
 };
 
@@ -208,7 +218,6 @@ exports.deleteCategory = async (req, res) => {
     }
 };
 
-// @desc    Seed initial motorcycle parts categories
 // @desc    Add missing motorcycle parts categories (safe - won't delete existing ones)
 exports.seedCategories = async (req, res) => {
     try {
