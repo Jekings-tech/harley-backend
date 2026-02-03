@@ -25,6 +25,14 @@ const productSchema = new mongoose.Schema({
         required: true 
     },
     
+    // NEW: Year field
+    year: { 
+        type: Number, 
+        required: true,
+        min: [1994, 'Year must be 1994 or later'],
+        max: [2024, 'Year cannot be later than 2024']
+    },
+    
     // OPTIONAL FIELDS
     images: { type: [String], default: [] },
     quantity: { type: Number, default: 0 },

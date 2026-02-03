@@ -62,6 +62,7 @@ exports.createProduct = async (req, res) => {
             category, 
             country, 
             brand,
+            year,
             quantity,
             compatibility,
             features,
@@ -69,11 +70,11 @@ exports.createProduct = async (req, res) => {
         } = req.body;
         
         console.log('📥 Received data:', {
-            name, price, description, motorcycleModel, condition, category, country, brand
+            name, price, description, motorcycleModel, condition, category, country, brand, year
         });
         
         // Simple validation
-        const requiredFields = ['name', 'price', 'description', 'category', 'country', 'brand'];
+        const requiredFields = ['name', 'price', 'description', 'category', 'country', 'brand', 'year'];
         const missingFields = requiredFields.filter(field => !req.body[field]);
         
         if (missingFields.length > 0) {
@@ -85,9 +86,9 @@ exports.createProduct = async (req, res) => {
         
         // Use placeholder image for now
         // Use provided images OR placeholder
-const images = req.body.images && req.body.images.length > 0 
-    ? (Array.isArray(req.body.images) ? req.body.images : [req.body.images])
-    : ['https://placehold.co/500x500/cccccc/969696?text=Product+Image'];
+        const images = req.body.images && req.body.images.length > 0 
+            ? (Array.isArray(req.body.images) ? req.body.images : [req.body.images])
+            : ['https://placehold.co/500x500/cccccc/969696?text=Product+Image'];
         
         // Parse arrays if provided
         const compatibilityArray = compatibility 
@@ -111,6 +112,7 @@ const images = req.body.images && req.body.images.length > 0
             price: parseFloat(price) || 0,
             description: String(description),
             motorcycleModel: motorcycleModel || 'Generic',
+            year: parseInt(year) || 2024,
             condition: condition || 'New',
             category: String(category),
             country: String(country),
@@ -181,6 +183,7 @@ exports.updateProduct = async (req, res) => {
         if (updates.country !== undefined) product.country = String(updates.country);
         if (updates.brand !== undefined) product.brand = String(updates.brand);
         if (updates.motorcycleModel !== undefined) product.motorcycleModel = String(updates.motorcycleModel);
+        if (updates.year !== undefined) product.year = parseInt(updates.year) || 2024;
         if (updates.condition !== undefined) product.condition = String(updates.condition);
         if (updates.price !== undefined) product.price = parseFloat(updates.price) || 0;
         if (updates.description !== undefined) product.description = String(updates.description);
@@ -273,7 +276,8 @@ exports.searchProducts = async (req, res) => {
                 { motorcycleModel: { $regex: search, $options: 'i' } },
                 { category: { $regex: search, $options: 'i' } },
                 { country: { $regex: search, $options: 'i' } },
-                { brand: { $regex: search, $options: 'i' } }
+                { brand: { $regex: search, $options: 'i' } },
+                { year: { $regex: search, $options: 'i' } }
             ];
         }
         
