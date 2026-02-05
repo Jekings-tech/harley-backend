@@ -74,7 +74,7 @@ exports.createProduct = async (req, res) => {
         });
         
         // Simple validation
-        const requiredFields = ['name', 'price', 'description', 'category', 'country', 'brand', 'year'];
+        const requiredFields = ['name', 'price', 'description', 'category', 'country', 'brand'];
         const missingFields = requiredFields.filter(field => !req.body[field]);
         
         if (missingFields.length > 0) {
@@ -112,7 +112,7 @@ exports.createProduct = async (req, res) => {
             price: parseFloat(price) || 0,
             description: String(description),
             motorcycleModel: motorcycleModel || 'Generic',
-            year: parseInt(year) || 2024,
+            year: year ? parseInt(year) : null,
             condition: condition || 'New',
             category: String(category),
             country: String(country),
@@ -183,7 +183,9 @@ exports.updateProduct = async (req, res) => {
         if (updates.country !== undefined) product.country = String(updates.country);
         if (updates.brand !== undefined) product.brand = String(updates.brand);
         if (updates.motorcycleModel !== undefined) product.motorcycleModel = String(updates.motorcycleModel);
-        if (updates.year !== undefined) product.year = parseInt(updates.year) || 2024;
+        if (updates.year !== undefined) {
+    product.year = updates.year ? parseInt(updates.year) : null;
+}
         if (updates.condition !== undefined) product.condition = String(updates.condition);
         if (updates.price !== undefined) product.price = parseFloat(updates.price) || 0;
         if (updates.description !== undefined) product.description = String(updates.description);
