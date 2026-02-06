@@ -1,12 +1,10 @@
 const Brand = require('../models/Brand');
-const Country = require('../models/MotorcycleModelCategory');
 const Product = require('../models/Product');
 
-// @desc    Get all brands with country details
+// @desc    Get all brands
 exports.getAllBrands = async (req, res) => {
     try {
         const brands = await Brand.find()
-            .populate('country', 'name code flagImage')
             .sort({ name: 1 });
         
         res.status(200).json({
@@ -26,8 +24,7 @@ exports.getAllBrands = async (req, res) => {
 // @desc    Get single brand
 exports.getBrand = async (req, res) => {
     try {
-        const brand = await Brand.findById(req.params.id)
-            .populate('country', 'name code');
+        const brand = await Brand.findById(req.params.id);
         
         if (!brand) {
             return res.status(404).json({
@@ -52,12 +49,13 @@ exports.getBrand = async (req, res) => {
 // @desc    Create new brand
 exports.createBrand = async (req, res) => {
     try {
-        const { name, country, logo, description, establishedYear, website } = req.body;
+        const { name, logo, description, establishedYear, website } = req.body;
         
-        if (!name || !country) {
+        // CHANGED: Removed country requirement
+        if (!name) {
             return res.status(400).json({
                 success: false,
-                message: 'Brand name and country are required'
+                message: 'Brand name is required'
             });
         }
         
@@ -70,21 +68,11 @@ exports.createBrand = async (req, res) => {
             });
         }
         
-        // Check if country exists
-        const countryExists = await Country.findById(country);
-        if (!countryExists) {
-            return res.status(400).json({
-                success: false,
-                message: 'Selected country does not exist'
-            });
-        }
-        
         // Get logo URL from Cloudinary if uploaded
         const logoUrl = req.file ? req.file.path : logo;
         
         const brand = await Brand.create({
             name,
-            country,
             logo: logoUrl,
             description,
             establishedYear,
@@ -92,13 +80,10 @@ exports.createBrand = async (req, res) => {
             popularModels: Brand.getPopularModels(name)
         });
         
-        const populatedBrand = await Brand.findById(brand._id)
-            .populate('country', 'name');
-        
         res.status(201).json({
             success: true,
             message: 'Brand created successfully',
-            data: populatedBrand
+            data: brand
         });
         
     } catch (error) {
@@ -122,7 +107,7 @@ exports.updateBrand = async (req, res) => {
             });
         }
         
-        const { name, country, description, establishedYear, website } = req.body;
+        const { name, description, establishedYear, website } = req.body;
         
         if (name) {
             // Check if new name already exists
@@ -140,7 +125,6 @@ exports.updateBrand = async (req, res) => {
             brand.name = name;
         }
         
-        if (country) brand.country = country;
         if (description !== undefined) brand.description = description;
         if (establishedYear !== undefined) brand.establishedYear = establishedYear;
         if (website !== undefined) brand.website = website;
@@ -152,13 +136,10 @@ exports.updateBrand = async (req, res) => {
         
         await brand.save();
         
-        const updatedBrand = await Brand.findById(brand._id)
-            .populate('country', 'name');
-        
         res.status(200).json({
             success: true,
             message: 'Brand updated successfully',
-            data: updatedBrand
+            data: brand
         });
         
     } catch (error) {
@@ -208,12 +189,12 @@ exports.deleteBrand = async (req, res) => {
     }
 };
 
-// @desc    Get brands by country
-exports.getBrandsByCountry = async (req, res) => {
+// @desc    Get brands by model category (CHANGED from country)
+exports.getBrandsByModelCategory = async (req, res) => {
     try {
-        const brands = await Brand.find({ country: req.params.countryId })
-            .populate('country', 'name code')
-            .sort({ name: 1 });
+        // Since we removed country from Brand model, this might need rethinking
+        // For now, we'll return all brands
+        const brands = await Brand.find().sort({ name: 1 });
         
         res.status(200).json({
             success: true,
@@ -223,7 +204,7 @@ exports.getBrandsByCountry = async (req, res) => {
     } catch (error) {
         res.status(500).json({
             success: false,
-            message: 'Error fetching brands by country',
+            message: 'Error fetching brands',
             error: error.message
         });
     }
@@ -235,49 +216,42 @@ exports.seedBrands = async (req, res) => {
         // Clear existing brands
         await Brand.deleteMany({});
         
-        // Get country IDs first
-        const countries = await Country.find();
-        const countryMap = {};
-        countries.forEach(country => {
-            countryMap[country.name] = country._id;
-        });
-        
         const motorcycleBrands = [
             {
                 name: 'Harley Davidson',
-                country: countryMap['American'],
                 description: 'American motorcycle manufacturer',
-                establishedYear: 1903
+                establishedYear: 1903,
+                logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/Harley-Davidson_logo.svg/1200px-Harley-Davidson_logo.svg.png'
             },
             {
                 name: 'Indian Motorcycle',
-                country: countryMap['American'],
                 description: 'American motorcycle brand',
-                establishedYear: 1901
+                establishedYear: 1901,
+                logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Indian_Motorcycle_Logo.svg/1200px-Indian_Motorcycle_Logo.svg.png'
             },
             {
                 name: 'Triumph',
-                country: countryMap['British'],
                 description: 'British motorcycle manufacturer',
-                establishedYear: 1902
+                establishedYear: 1902,
+                logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/84/Triumph_Motorcycles_logo.svg/1200px-Triumph_Motorcycles_logo.svg.png'
             },
             {
                 name: 'BMW Motorrad',
-                country: countryMap['German'],
                 description: 'German motorcycle brand',
-                establishedYear: 1923
+                establishedYear: 1923,
+                logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/BMW_Motorrad_logo.svg/1200px-BMW_Motorrad_logo.svg.png'
             },
             {
                 name: 'Honda',
-                country: countryMap['Japanese'],
                 description: 'Japanese multinational corporation',
-                establishedYear: 1948
+                establishedYear: 1948,
+                logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Honda_logo.svg/1200px-Honda_logo.svg.png'
             },
             {
                 name: 'Ducati',
-                country: countryMap['Italian'],
                 description: 'Italian motorcycle manufacturer',
-                establishedYear: 1926
+                establishedYear: 1926,
+                logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Ducati_Logo_2012.svg/1200px-Ducati_Logo_2012.svg.png'
             }
         ];
         
@@ -292,13 +266,12 @@ exports.seedBrands = async (req, res) => {
         
         await Brand.insertMany(motorcycleBrands);
         
-        const populatedBrands = await Brand.find()
-            .populate('country', 'name');
+        const brands = await Brand.find();
         
         res.status(200).json({
             success: true,
             message: 'Motorcycle brands seeded successfully',
-            data: populatedBrands
+            data: brands
         });
     } catch (error) {
         res.status(500).json({

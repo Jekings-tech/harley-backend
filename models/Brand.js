@@ -7,11 +7,7 @@ const brandSchema = new mongoose.Schema({
         unique: true,
         trim: true
     },
-    country: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Country',
-        required: [true, 'Country is required']
-    },
+    // REMOVED country field completely
     logo: {
         type: String, // URL to logo image (Cloudinary)
         default: ''
@@ -39,8 +35,8 @@ const brandSchema = new mongoose.Schema({
     timestamps: true
 });
 
-// Index for faster queries
-brandSchema.index({ country: 1, name: 1 });
+// Removed country index since country field no longer exists
+brandSchema.index({ name: 1 });
 brandSchema.index({ isActive: 1 });
 
 // Static method to get popular models by brand

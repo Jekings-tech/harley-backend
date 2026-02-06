@@ -6,11 +6,12 @@ const productController = require('../controllers/productController');
 // SIMPLE WORKING VERSION - NO FILE UPLOAD
 // ============================================
 
-// All GET routes (unchanged)
+// All GET routes
 router.get('/', productController.getAllProducts);
 router.get('/featured', productController.getFeaturedProducts);
 router.get('/brand/:brandId', productController.getProductsByBrand);
-router.get('/country/:countryId', productController.getProductsByCountry);
+// CHANGED: country to modelCategory
+router.get('/model-category/:modelCategoryId', productController.getProductsByModelCategory);
 router.get('/search', productController.searchProducts);
 router.get('/:id', productController.getProductById);
 

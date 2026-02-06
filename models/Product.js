@@ -8,15 +8,16 @@ const productSchema = new mongoose.Schema({
     condition: { type: String, required: true },
     motorcycleModel: { type: String, required: true },
     
-    // ⭐⭐ CHANGE THESE TO ObjectId REFERENCES ⭐⭐
+    // ObjectId REFERENCES
     category: { 
         type: mongoose.Schema.Types.ObjectId, 
         ref: 'Category',
         required: true 
     },
-    country: { 
+    // CHANGED: country to modelCategory
+    modelCategory: { 
         type: mongoose.Schema.Types.ObjectId, 
-        ref: 'Country',
+        ref: 'MotorcycleModelCategory', // NEW reference
         required: true 
     },
     brand: { 
@@ -25,7 +26,7 @@ const productSchema = new mongoose.Schema({
         required: true 
     },
     
-    // NEW: Year field
+    // Year field
     year: { 
         type: Number, 
         required: false,
@@ -36,6 +37,15 @@ const productSchema = new mongoose.Schema({
     // OPTIONAL FIELDS
     images: { type: [String], default: [] },
     quantity: { type: Number, default: 0 },
+    
+    // ADDITIONAL FIELDS (from your controller)
+    compatibility: { type: [String], default: [] },
+    features: { type: [String], default: [] },
+    slug: { type: String, unique: true, sparse: true },
+    primaryImage: { type: String, default: '' },
+    
+    // Sale fields
+    salePrice: { type: Number, default: null },
     
     // Default values
     inStock: { type: Boolean, default: true },

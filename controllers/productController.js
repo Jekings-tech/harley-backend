@@ -6,7 +6,7 @@ exports.getAllProducts = async (req, res) => {
         const products = await Product.find()
             .sort({ createdAt: -1 })
             .populate('category', 'name')      // Populates with category name
-            .populate('country', 'name')       // Populates with country name
+            .populate('modelCategory', 'name') // CHANGED: country to modelCategory
             .populate('brand', 'name logo');   // Populates with brand name & logo
         
         res.status(200).json({
@@ -28,7 +28,7 @@ exports.getProductById = async (req, res) => {
     try {
         const product = await Product.findById(req.params.id)
             .populate('category', 'name')
-            .populate('country', 'name')
+            .populate('modelCategory', 'name') // CHANGED: country to modelCategory
             .populate('brand', 'name logo');
             
         if (!product) {
@@ -60,7 +60,7 @@ exports.createProduct = async (req, res) => {
             motorcycleModel, 
             condition, 
             category, 
-            country, 
+            modelCategory,  // CHANGED: country to modelCategory
             brand,
             year,
             quantity,
@@ -70,11 +70,11 @@ exports.createProduct = async (req, res) => {
         } = req.body;
         
         console.log('📥 Received data:', {
-            name, price, description, motorcycleModel, condition, category, country, brand, year
+            name, price, description, motorcycleModel, condition, category, modelCategory, brand, year
         });
         
-        // Simple validation
-        const requiredFields = ['name', 'price', 'description', 'category', 'country', 'brand'];
+        // Simple validation - CHANGED: removed 'country', added 'modelCategory'
+        const requiredFields = ['name', 'price', 'description', 'category', 'modelCategory', 'brand'];
         const missingFields = requiredFields.filter(field => !req.body[field]);
         
         if (missingFields.length > 0) {
@@ -85,7 +85,6 @@ exports.createProduct = async (req, res) => {
         }
         
         // Use placeholder image for now
-        // Use provided images OR placeholder
         const images = req.body.images && req.body.images.length > 0 
             ? (Array.isArray(req.body.images) ? req.body.images : [req.body.images])
             : ['https://placehold.co/500x500/cccccc/969696?text=Product+Image'];
@@ -106,7 +105,7 @@ exports.createProduct = async (req, res) => {
             .replace(/-+/g, '-')
             .trim() + '-' + Date.now();
         
-        // Create product
+        // Create product - CHANGED: country to modelCategory
         const productData = {
             name: String(name),
             price: parseFloat(price) || 0,
@@ -115,7 +114,7 @@ exports.createProduct = async (req, res) => {
             year: year ? parseInt(year) : null,
             condition: condition || 'New',
             category: String(category),
-            country: String(country),
+            modelCategory: String(modelCategory), // CHANGED
             brand: String(brand),
             images: images,
             quantity: parseInt(quantity) || 0,
@@ -124,7 +123,7 @@ exports.createProduct = async (req, res) => {
             inStock: true,
             isFeatured: false,
             primaryImage: images[0],
-            slug: productSlug  // ⭐ CRITICAL: Add slug field to avoid duplicate key error
+            slug: productSlug
         };
         
         console.log('📝 Creating product with slug:', productSlug);
@@ -170,7 +169,6 @@ exports.updateProduct = async (req, res) => {
         // Update name and slug together
         if (updates.name !== undefined) {
             product.name = String(updates.name);
-            // Update slug when name changes
             product.slug = updates.name.toLowerCase()
                 .replace(/[^a-z0-9\s-]/g, '')
                 .replace(/\s+/g, '-')
@@ -178,14 +176,14 @@ exports.updateProduct = async (req, res) => {
                 .trim() + '-' + Date.now();
         }
         
-        // Other field updates
+        // Other field updates - CHANGED: country to modelCategory
         if (updates.category !== undefined) product.category = String(updates.category);
-        if (updates.country !== undefined) product.country = String(updates.country);
+        if (updates.modelCategory !== undefined) product.modelCategory = String(updates.modelCategory); // CHANGED
         if (updates.brand !== undefined) product.brand = String(updates.brand);
         if (updates.motorcycleModel !== undefined) product.motorcycleModel = String(updates.motorcycleModel);
         if (updates.year !== undefined) {
-    product.year = updates.year ? parseInt(updates.year) : null;
-}
+            product.year = updates.year ? parseInt(updates.year) : null;
+        }
         if (updates.condition !== undefined) product.condition = String(updates.condition);
         if (updates.price !== undefined) product.price = parseFloat(updates.price) || 0;
         if (updates.description !== undefined) product.description = String(updates.description);
@@ -270,14 +268,14 @@ exports.searchProducts = async (req, res) => {
         const { search } = req.query;
         let query = {};
         
-        // Text search
+        // Text search - CHANGED: country to modelCategory
         if (search) {
             query.$or = [
                 { name: { $regex: search, $options: 'i' } },
                 { description: { $regex: search, $options: 'i' } },
                 { motorcycleModel: { $regex: search, $options: 'i' } },
                 { category: { $regex: search, $options: 'i' } },
-                { country: { $regex: search, $options: 'i' } },
+                { modelCategory: { $regex: search, $options: 'i' } }, // CHANGED
                 { brand: { $regex: search, $options: 'i' } },
                 { year: { $regex: search, $options: 'i' } }
             ];
@@ -340,10 +338,10 @@ exports.getProductsByBrand = async (req, res) => {
     }
 };
 
-// @desc    Get products by country
-exports.getProductsByCountry = async (req, res) => {
+// @desc    Get products by modelCategory (CHANGED from country)
+exports.getProductsByModelCategory = async (req, res) => {
     try {
-        const products = await Product.find({ country: req.params.countryId })
+        const products = await Product.find({ modelCategory: req.params.modelCategoryId })
             .sort({ createdAt: -1 });
         
         res.status(200).json({
@@ -354,7 +352,7 @@ exports.getProductsByCountry = async (req, res) => {
     } catch (error) {
         res.status(500).json({
             success: false,
-            message: 'Error fetching products by country',
+            message: 'Error fetching products by model category',
             error: error.message
         });
     }

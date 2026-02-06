@@ -27,8 +27,8 @@ const upload = multer({ storage: storage });
 // GET all brands
 router.get('/', brandController.getAllBrands);
 
-// GET brands by country
-router.get('/country/:countryId', brandController.getBrandsByCountry);
+// CHANGED: country to model-category
+router.get('/model-category/:modelCategoryId', brandController.getBrandsByModelCategory);
 
 // GET single brand
 router.get('/:id', brandController.getBrand);
