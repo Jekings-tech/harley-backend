@@ -1,5 +1,5 @@
 const Brand = require('../models/Brand');
-const Country = require('../models/Country');
+const Country = require('../models/MotorcycleModelCategory');
 const Product = require('../models/Product');
 
 // @desc    Get all brands with country details
