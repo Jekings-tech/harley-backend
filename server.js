@@ -55,7 +55,7 @@ app.post('/api/auth/login', (req, res) => {
     }
 });
 
-        // Simple product data
+// Simple product data
         
 // Add before your routes
 app.use((req, res, next) => {
@@ -67,12 +67,12 @@ app.use((req, res, next) => {
 const productRoutes = require('./routes/productRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const brandRoutes = require('./routes/brandRoutes');
-const countryRoutes = require('./routes/countryRoutes');
+const modelCategoryRoutes = require('./routes/motorcycleModelCategoryRoutes'); // CHANGED
 
-app.use('/api/products',productRoutes);
-app.use('/api/categories',  categoryRoutes);
-app.use('/api/brands',  brandRoutes);
-app.use('/api/countries',  countryRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/brands', brandRoutes);
+app.use('/api/model-categories', modelCategoryRoutes); // CHANGED (instead of /api/countries)
 
 // Health Check Route (No authentication required)
 app.get('/api/health', (req, res) => {
@@ -100,4 +100,5 @@ app.listen(PORT, () => {
   console.log(`📁 Database: ${mongoose.connection.name}`);
   console.log(`🔐 Login endpoint: POST http://localhost:${PORT}/api/auth/login`);
   console.log(`👤 Default credentials: admin / admin123`);
+  console.log(`🏍️ Model Categories endpoint: GET http://localhost:${PORT}/api/model-categories`);
 });

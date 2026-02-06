@@ -29,7 +29,7 @@ const productSchema = new mongoose.Schema({
     year: { 
         type: Number, 
         required: false,
-        min: [1994, 'Year must be 1994 or later'],
+        min: [1980, 'Year must be 1980 or later'],
         max: [2024, 'Year cannot be later than 2024']
     },
     

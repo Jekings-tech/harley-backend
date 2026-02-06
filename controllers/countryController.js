@@ -1,251 +1,276 @@
-const Country = require('../models/Country');
+const MotorcycleModelCategory = require('../models/MotorcycleModelCategory');
 const Brand = require('../models/Brand');
 const Product = require('../models/Product');
 
-// @desc    Get all countries
-exports.getAllCountries = async (req, res) => {
+// @desc    Get all motorcycle model categories
+exports.getAllCategories = async (req, res) => {
     try {
-        const countries = await Country.find().sort({ name: 1 });
+        const categories = await MotorcycleModelCategory.find()
+            .sort({ name: 1 });
         
         res.status(200).json({
             success: true,
-            count: countries.length,
-            data: countries
+            count: categories.length,
+            data: categories
         });
     } catch (error) {
         res.status(500).json({
             success: false,
-            message: 'Error fetching countries',
+            message: 'Error fetching motorcycle model categories',
             error: error.message
         });
     }
 };
 
-// @desc    Get single country with brands
-exports.getCountry = async (req, res) => {
+// @desc    Get single category with details
+exports.getCategory = async (req, res) => {
     try {
-        const country = await Country.findById(req.params.id);
+        const category = await MotorcycleModelCategory.findById(req.params.id);
         
-        if (!country) {
+        if (!category) {
             return res.status(404).json({
                 success: false,
-                message: 'Country not found'
+                message: 'Model category not found'
             });
         }
         
-        // Get brands from this country
-        const brands = await Brand.find({ country: country._id })
-            .select('name logo')
-            .sort({ name: 1 });
+        // Get products in this category
+        const products = await Product.find({ modelCategory: category.name })
+            .select('name price images condition')
+            .sort({ name: 1 })
+            .limit(10);
         
-        // Get product count for this country
-        const productCount = await Product.countDocuments({ country: country._id });
+        // Get product count for this category
+        const productCount = await Product.countDocuments({ modelCategory: category.name });
         
         res.status(200).json({
             success: true,
             data: {
-                ...country.toObject(),
-                brands,
+                ...category.toObject(),
+                recentProducts: products,
                 productCount
             }
         });
     } catch (error) {
         res.status(500).json({
             success: false,
-            message: 'Error fetching country',
+            message: 'Error fetching model category',
             error: error.message
         });
     }
 };
 
-// @desc    Create new country
-exports.createCountry = async (req, res) => {
+// @desc    Create new motorcycle model category
+exports.createCategory = async (req, res) => {
     try {
-        const { name, code, motorcycleCulture } = req.body;
+        const { name, code, description } = req.body;
         
         if (!name || !code) {
             return res.status(400).json({
                 success: false,
-                message: 'Country name and code are required'
+                message: 'Category name and code are required'
             });
         }
         
-        // Check if country already exists
-        const existingCountry = await Country.findOne({
+        // Check if category already exists
+        const existingCategory = await MotorcycleModelCategory.findOne({
             $or: [{ name }, { code }]
         });
         
-        if (existingCountry) {
+        if (existingCategory) {
             return res.status(400).json({
                 success: false,
-                message: 'Country or code already exists'
+                message: 'Category name or code already exists'
             });
         }
         
-        // Get flag image URL from Cloudinary if uploaded
-        const flagImage = req.file ? req.file.path : '';
+        // Get icon URL from Cloudinary if uploaded
+        const icon = req.file ? req.file.path : '';
         
-        const country = await Country.create({
+        const category = await MotorcycleModelCategory.create({
             name,
             code: code.toUpperCase(),
-            flagImage,
-            motorcycleCulture
+            icon,
+            description,
+            popularModels: req.body.popularModels || []
         });
         
         res.status(201).json({
             success: true,
-            message: 'Country created successfully',
-            data: country
+            message: 'Motorcycle model category created successfully',
+            data: category
         });
         
     } catch (error) {
         res.status(500).json({
             success: false,
-            message: 'Error creating country',
+            message: 'Error creating model category',
             error: error.message
         });
     }
 };
 
-// @desc    Update country
-exports.updateCountry = async (req, res) => {
+// @desc    Update motorcycle model category
+exports.updateCategory = async (req, res) => {
     try {
-        let country = await Country.findById(req.params.id);
+        let category = await MotorcycleModelCategory.findById(req.params.id);
         
-        if (!country) {
+        if (!category) {
             return res.status(404).json({
                 success: false,
-                message: 'Country not found'
+                message: 'Model category not found'
             });
         }
         
-        const { name, code, motorcycleCulture } = req.body;
+        const { name, code, description, popularModels } = req.body;
         
         if (name) {
             // Check if new name already exists
-            const existingCountry = await Country.findOne({
+            const existingCategory = await MotorcycleModelCategory.findOne({
                 name,
                 _id: { $ne: req.params.id }
             });
             
-            if (existingCountry) {
+            if (existingCategory) {
                 return res.status(400).json({
                     success: false,
-                    message: 'Country name already exists'
+                    message: 'Category name already exists'
                 });
             }
-            country.name = name;
+            category.name = name;
         }
         
         if (code) {
             // Check if new code already exists
-            const existingCountry = await Country.findOne({
+            const existingCategory = await MotorcycleModelCategory.findOne({
                 code: code.toUpperCase(),
                 _id: { $ne: req.params.id }
             });
             
-            if (existingCountry) {
+            if (existingCategory) {
                 return res.status(400).json({
                     success: false,
-                    message: 'Country code already exists'
+                    message: 'Category code already exists'
                 });
             }
-            country.code = code.toUpperCase();
+            category.code = code.toUpperCase();
         }
         
-        if (motorcycleCulture !== undefined) country.motorcycleCulture = motorcycleCulture;
+        if (description !== undefined) category.description = description;
+        if (popularModels !== undefined) category.popularModels = popularModels;
         
-        // Update flag image if new file uploaded
+        // Update icon if new file uploaded
         if (req.file) {
-            country.flagImage = req.file.path;
+            category.icon = req.file.path;
         }
         
-        await country.save();
+        await category.save();
         
         res.status(200).json({
             success: true,
-            message: 'Country updated successfully',
-            data: country
+            message: 'Model category updated successfully',
+            data: category
         });
         
     } catch (error) {
         res.status(500).json({
             success: false,
-            message: 'Error updating country',
+            message: 'Error updating model category',
             error: error.message
         });
     }
 };
 
-// @desc    Delete country
-exports.deleteCountry = async (req, res) => {
+// @desc    Delete motorcycle model category
+exports.deleteCategory = async (req, res) => {
     try {
-        const country = await Country.findById(req.params.id);
+        const category = await MotorcycleModelCategory.findById(req.params.id);
         
-        if (!country) {
+        if (!category) {
             return res.status(404).json({
                 success: false,
-                message: 'Country not found'
+                message: 'Model category not found'
             });
         }
         
-        // Check if country has associated brands
-        const brandCount = await Brand.countDocuments({ country: req.params.id });
-        
-        if (brandCount > 0) {
-            return res.status(400).json({
-                success: false,
-                message: `Cannot delete country. It has ${brandCount} associated brand(s).`
-            });
-        }
-        
-        // Check if country has associated products
-        const productCount = await Product.countDocuments({ country: req.params.id });
+        // Check if category has associated products
+        const productCount = await Product.countDocuments({ 
+            modelCategory: category.name 
+        });
         
         if (productCount > 0) {
             return res.status(400).json({
                 success: false,
-                message: `Cannot delete country. It has ${productCount} associated product(s).`
+                message: `Cannot delete category. It has ${productCount} associated product(s).`
             });
         }
         
-        await country.deleteOne();
+        await category.deleteOne();
         
         res.status(200).json({
             success: true,
-            message: 'Country deleted successfully'
+            message: 'Model category deleted successfully'
         });
         
     } catch (error) {
         res.status(500).json({
             success: false,
-            message: 'Error deleting country',
+            message: 'Error deleting model category',
             error: error.message
         });
     }
 };
 
-// @desc    Seed initial countries for motorcycle parts
-exports.seedCountries = async (req, res) => {
+// @desc    Seed initial motorcycle model categories
+exports.seedCategories = async (req, res) => {
     try {
-        // Clear existing countries
-        await Country.deleteMany({});
+        // Clear existing categories
+        await MotorcycleModelCategory.deleteMany({});
         
-        const initialCountries = Country.getDefaultCountries();
+        const initialCategories = MotorcycleModelCategory.getDefaultCategories();
         
-        await Country.insertMany(initialCountries);
+        await MotorcycleModelCategory.insertMany(initialCategories);
         
-        const countries = await Country.find();
+        const categories = await MotorcycleModelCategory.find();
         
         res.status(200).json({
             success: true,
-            message: 'Countries seeded successfully',
-            data: countries
+            message: 'Motorcycle model categories seeded successfully',
+            data: categories
         });
     } catch (error) {
         res.status(500).json({
             success: false,
-            message: 'Error seeding countries',
+            message: 'Error seeding categories',
+            error: error.message
+        });
+    }
+};
+
+// @desc    Get popular models by category
+exports.getPopularModelsByCategory = async (req, res) => {
+    try {
+        const category = await MotorcycleModelCategory.findById(req.params.id)
+            .select('name popularModels');
+        
+        if (!category) {
+            return res.status(404).json({
+                success: false,
+                message: 'Model category not found'
+            });
+        }
+        
+        res.status(200).json({
+            success: true,
+            data: {
+                category: category.name,
+                popularModels: category.popularModels || []
+            }
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching popular models',
             error: error.message
         });
     }

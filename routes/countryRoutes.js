@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const countryController = require('../controllers/countryController');
+const modelCategoryController = require('../controllers/motorcycleModelCategoryController');
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
@@ -15,7 +15,7 @@ cloudinary.config({
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: 'country_flags',
+    folder: 'motorcycle_category_icons', // Changed folder name
     allowed_formats: ['jpg', 'png', 'jpeg', 'webp', 'svg']
   }
 });
@@ -24,22 +24,25 @@ const upload = multer({ storage: storage });
 
 // --- ROUTES ---
 
-// GET all countries
-router.get('/', countryController.getAllCountries);
+// GET all motorcycle model categories
+router.get('/', modelCategoryController.getAllCategories);
 
-// GET single country with brands
-router.get('/:id', countryController.getCountry);
+// GET single category with details
+router.get('/:id', modelCategoryController.getCategory);
 
-// CREATE country (with flag)
-router.post('/', upload.single('flagImage'), countryController.createCountry);
+// GET popular models by category
+router.get('/:id/popular-models', modelCategoryController.getPopularModelsByCategory);
 
-// UPDATE country (optional new flag)
-router.put('/:id', upload.single('flagImage'), countryController.updateCountry);
+// CREATE model category (with icon)
+router.post('/', upload.single('icon'), modelCategoryController.createCategory);
 
-// DELETE country
-router.delete('/:id', countryController.deleteCountry);
+// UPDATE model category (optional new icon)
+router.put('/:id', upload.single('icon'), modelCategoryController.updateCategory);
 
-// SEED initial countries
-router.post('/seed', countryController.seedCountries);
+// DELETE model category
+router.delete('/:id', modelCategoryController.deleteCategory);
+
+// SEED initial categories
+router.post('/seed', modelCategoryController.seedCategories);
 
 module.exports = router;
