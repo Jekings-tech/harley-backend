@@ -16,7 +16,7 @@ const productSchema = new mongoose.Schema({
     },
     // CHANGED: country to modelCategory
     modelCategory: { 
-        type: mongoose.Schema.Types.ObjectId, 
+        type: String,
         ref: 'MotorcycleModelCategory', // NEW reference
         required: true 
     },
