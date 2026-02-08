@@ -10,8 +10,6 @@ const productController = require('../controllers/productController');
 router.get('/', productController.getAllProducts);
 router.get('/featured', productController.getFeaturedProducts);
 router.get('/brand/:brandId', productController.getProductsByBrand);
-// CHANGED: country to modelCategory
-router.get('/model-category/:modelCategoryId', productController.getProductsByModelCategory);
 router.get('/search', productController.searchProducts);
 router.get('/:id', productController.getProductById);
 

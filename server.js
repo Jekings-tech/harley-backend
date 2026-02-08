@@ -67,12 +67,12 @@ app.use((req, res, next) => {
 const productRoutes = require('./routes/productRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const brandRoutes = require('./routes/brandRoutes');
-const modelCategoryRoutes = require('./routes/motorcycleModelCategoryRoutes'); // CHANGED
+// CHANGED
 
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/brands', brandRoutes);
-app.use('/api/model-categories', modelCategoryRoutes); // CHANGED (instead of /api/countries)
+
 
 // Health Check Route (No authentication required)
 app.get('/api/health', (req, res) => {
