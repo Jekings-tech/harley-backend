@@ -15,11 +15,8 @@ const productSchema = new mongoose.Schema({
         required: true 
     },
     // CHANGED: country to modelCategory
-    modelCategory: { 
-        type: String,
-        ref: 'MotorcycleModelCategory', // NEW reference
-        required: true 
-    },
+    
+    
     brand: { 
         type: mongoose.Schema.Types.ObjectId, 
         ref: 'Brand',

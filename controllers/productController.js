@@ -6,8 +6,8 @@ exports.getAllProducts = async (req, res) => {
         const products = await Product.find()
             .sort({ createdAt: -1 })
             .populate('category', 'name')      // Populates with category name
-            .populate('modelCategory', 'name') // CHANGED: country to modelCategory
             .populate('brand', 'name logo');   // Populates with brand name & logo
+            // REMOVED: .populate('modelCategory', 'name')
         
         res.status(200).json({
             success: true,
@@ -28,8 +28,8 @@ exports.getProductById = async (req, res) => {
     try {
         const product = await Product.findById(req.params.id)
             .populate('category', 'name')
-            .populate('modelCategory', 'name') // CHANGED: country to modelCategory
             .populate('brand', 'name logo');
+            // REMOVED: .populate('modelCategory', 'name')
             
         if (!product) {
             return res.status(404).json({
@@ -57,24 +57,24 @@ exports.createProduct = async (req, res) => {
             name, 
             price, 
             description, 
-            motorcycleModel, 
+            motorcycleModel,  // KEEP THIS
             condition, 
             category, 
-            modelCategory,  // CHANGED: country to modelCategory
+            // REMOVED: modelCategory
             brand,
             year,
             quantity,
             compatibility,
             features,
-            slug  // Accept slug from frontend if provided
+            slug
         } = req.body;
         
         console.log('📥 Received data:', {
-            name, price, description, motorcycleModel, condition, category, modelCategory, brand, year
+            name, price, description, motorcycleModel, condition, category, brand, year
         });
         
-        // Simple validation - CHANGED: removed 'country', added 'modelCategory'
-        const requiredFields = ['name', 'price', 'description', 'category', 'modelCategory', 'brand'];
+        // Simple validation - REMOVED 'modelCategory'
+        const requiredFields = ['name', 'price', 'description', 'category', 'brand'];
         const missingFields = requiredFields.filter(field => !req.body[field]);
         
         if (missingFields.length > 0) {
@@ -105,16 +105,16 @@ exports.createProduct = async (req, res) => {
             .replace(/-+/g, '-')
             .trim() + '-' + Date.now();
         
-        // Create product - CHANGED: country to modelCategory
+        // Create product - REMOVED modelCategory
         const productData = {
             name: String(name),
             price: parseFloat(price) || 0,
             description: String(description),
-            motorcycleModel: motorcycleModel || 'Generic',
+            motorcycleModel: motorcycleModel || 'Generic', // KEEP THIS
             year: year ? parseInt(year) : null,
             condition: condition || 'New',
             category: String(category),
-            modelCategory: String(modelCategory), // CHANGED
+            // REMOVED: modelCategory
             brand: String(brand),
             images: images,
             quantity: parseInt(quantity) || 0,
@@ -176,9 +176,9 @@ exports.updateProduct = async (req, res) => {
                 .trim() + '-' + Date.now();
         }
         
-        // Other field updates - CHANGED: country to modelCategory
+        // Other field updates - REMOVED modelCategory
         if (updates.category !== undefined) product.category = String(updates.category);
-        if (updates.modelCategory !== undefined) product.modelCategory = String(updates.modelCategory); // CHANGED
+        // REMOVED: if (updates.modelCategory !== undefined) 
         if (updates.brand !== undefined) product.brand = String(updates.brand);
         if (updates.motorcycleModel !== undefined) product.motorcycleModel = String(updates.motorcycleModel);
         if (updates.year !== undefined) {
@@ -268,14 +268,14 @@ exports.searchProducts = async (req, res) => {
         const { search } = req.query;
         let query = {};
         
-        // Text search - CHANGED: country to modelCategory
+        // Text search - REMOVED modelCategory from search
         if (search) {
             query.$or = [
                 { name: { $regex: search, $options: 'i' } },
                 { description: { $regex: search, $options: 'i' } },
-                { motorcycleModel: { $regex: search, $options: 'i' } },
+                { motorcycleModel: { $regex: search, $options: 'i' } }, // KEEP THIS
                 { category: { $regex: search, $options: 'i' } },
-                { modelCategory: { $regex: search, $options: 'i' } }, // CHANGED
+                // REMOVED: modelCategory
                 { brand: { $regex: search, $options: 'i' } },
                 { year: { $regex: search, $options: 'i' } }
             ];
@@ -338,11 +338,12 @@ exports.getProductsByBrand = async (req, res) => {
     }
 };
 
-// @desc    Get products by modelCategory (CHANGED from country)
-exports.getProductsByModelCategory = async (req, res) => {
+// @desc    Get products by motorcycle model
+exports.getProductsByMotorcycleModel = async (req, res) => {
     try {
-        const products = await Product.find({ modelCategory: req.params.modelCategoryId })
-            .sort({ createdAt: -1 });
+        const products = await Product.find({ 
+            motorcycleModel: { $regex: req.params.modelName, $options: 'i' } 
+        }).sort({ createdAt: -1 });
         
         res.status(200).json({
             success: true,
@@ -352,7 +353,7 @@ exports.getProductsByModelCategory = async (req, res) => {
     } catch (error) {
         res.status(500).json({
             success: false,
-            message: 'Error fetching products by model category',
+            message: 'Error fetching products by motorcycle model',
             error: error.message
         });
     }
